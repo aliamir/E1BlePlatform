@@ -2,7 +2,6 @@ package com.example.amir.e1bleplatform;
 
 import android.widget.BaseAdapter;
 import android.content.Context;
-import android.widget.TwoLineListItem;
 import java.util.ArrayList;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,11 +11,13 @@ import android.widget.TextView;
 public class TwoItemListAdapter extends BaseAdapter {
 
     private Context context;
+    private int layoutResourceID;
     private ArrayList<BleDevice> devices;
 
-    public TwoItemListAdapter(Context context, ArrayList<BleDevice> devices) {
+    public TwoItemListAdapter(Context context, int resource, ArrayList<BleDevice> devices) {
         this.context = context;
         this.devices = devices;
+        layoutResourceID = resource;
     }
 
     @Override
@@ -35,25 +36,25 @@ public class TwoItemListAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-
-        TwoLineListItem twoLineListItem;
-
-        if (convertView == null) {
-            LayoutInflater inflater = (LayoutInflater) context
-                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            twoLineListItem = (TwoLineListItem) inflater.inflate(
-                    android.R.layout.simple_list_item_2, null);
-        } else {
-            twoLineListItem = (TwoLineListItem) convertView;
+    public View getView(int position, View convertedView, ViewGroup parent) {
+        // Make sure we have a view to use
+        View itemView = convertedView;
+        if (itemView == null) {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            itemView = inflater.inflate(layoutResourceID, parent, false);
         }
 
-        TextView text1 = twoLineListItem.getText1();
-        TextView text2 = twoLineListItem.getText2();
+        // Find the device
+        BleDevice currentDevice = devices.get(position);
 
-        text1.setText(devices.get(position).getName());
-        text2.setText("" + devices.get(position).getAddress());
+        // Fill the View (show the data from the BtleDevice class
+        TextView dNameText = itemView.findViewById(R.id.name);
+        dNameText.setText(currentDevice.getName());
 
-        return twoLineListItem;
+        TextView dAddressText = itemView.findViewById(R.id.address);
+        dAddressText.setText(currentDevice.getAddress());
+
+        // Return the View
+        return itemView;
     }
 }

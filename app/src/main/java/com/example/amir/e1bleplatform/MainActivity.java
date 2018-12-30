@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         mBluetoothAdapter = manager.getAdapter();
 
         // List of BLE devices found
-        mListOfDevicesView = (ListView) findViewById(R.id.list_bt_devices);
+        mListOfDevicesView = findViewById(R.id.list_bt_devices);
 
         HandleBtleScan();
 
@@ -78,10 +78,10 @@ public class MainActivity extends AppCompatActivity {
         list.add(device);
         // Show in ListView
         //ArrayAdapter<BleDevice> adaptlist = new ArrayAdapter<BleDevice>(this, android.R.layout.simple_list_item_1, list);
-        TwoItemListAdapter adaptlist = new TwoItemListAdapter(this, list);
+        TwoItemListAdapter adaptlist = new TwoItemListAdapter(this, R.layout.list_devices, list);
         //setListAdapter(new TwoItemListAdapter(this, list));
         mListOfDevicesView.setAdapter(adaptlist);
-/******* TESTING ********/
+        /******* TESTING ********/
     }
 
     @Override
