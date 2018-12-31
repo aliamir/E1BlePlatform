@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         // List of BLE devices found
         mListOfDevicesView = findViewById(R.id.list_bt_devices);
 
-        HandleBtleScan();
+        //HandleBtleScan();
 
         /******* TESTING ********/
         // Populate ListArray with dummy values
@@ -77,9 +77,7 @@ public class MainActivity extends AppCompatActivity {
         BleDevice device = new BleDevice("Amir", "50515 Woodford Dr.");
         list.add(device);
         // Show in ListView
-        //ArrayAdapter<BleDevice> adaptlist = new ArrayAdapter<BleDevice>(this, android.R.layout.simple_list_item_1, list);
         TwoItemListAdapter adaptlist = new TwoItemListAdapter(this, R.layout.list_devices, list);
-        //setListAdapter(new TwoItemListAdapter(this, list));
         mListOfDevicesView.setAdapter(adaptlist);
         /******* TESTING ********/
     }
@@ -164,5 +162,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    public void addDevice(final BluetoothDevice device){
+
     }
 }
