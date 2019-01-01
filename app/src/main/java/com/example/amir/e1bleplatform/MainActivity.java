@@ -80,9 +80,8 @@ public class MainActivity extends AppCompatActivity {
                     if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
                         Intent enableBtIntent = new Intent(ACTION_REQUEST_ENABLE);
                         startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-                        scanProgressBar.setVisibility(View.INVISIBLE);
                     } else {
-                        // Ask for location permission before scanning for BT devices. Google is weird.
+                        // Ask for location permission before scanning for BT devices. Android is weird.
                         int MY_PERMISSIONS_REQUEST_BTLE = 0;
                         int permissionCheck = ContextCompat.checkSelfPermission(MainActivity.this,
                                 ACCESS_FINE_LOCATION);
@@ -166,6 +165,9 @@ public class MainActivity extends AppCompatActivity {
         // Update the list
         BleDeviceListAdapter.notifyDataSetChanged();
 
+        // Start the progress bar
+        scanProgressBar.setVisibility(View.VISIBLE);
+
         // Start scanning
         mBleScanner.start();
     }
@@ -174,6 +176,10 @@ public class MainActivity extends AppCompatActivity {
         // Set the text of the button
         scanButton.setText(R.string.start_scan_button_text);
 
+        // Stop spinner
+        scanProgressBar.setVisibility(View.GONE);
+
+        // Stop scanning
         mBleScanner.stop();
     }
 

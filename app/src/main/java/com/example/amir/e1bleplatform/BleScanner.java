@@ -51,7 +51,7 @@ public class BleScanner {
 
     private void scanLeDevice(final boolean enable) {
         if (enable && !mScanning){
-            Toast.makeText(ma.getApplicationContext(), "Scanning...", Toast.LENGTH_SHORT).show();
+            // Toast.makeText(ma.getApplicationContext(), "Scanning...", Toast.LENGTH_SHORT).show();
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -65,7 +65,6 @@ public class BleScanner {
             mLEScanner.startScan(mScanCallback);
         }
         else {
-            Toast.makeText(ma.getApplicationContext(), "Stop Scanning...", Toast.LENGTH_SHORT).show();
             mScanning = false;
             mLEScanner.stopScan(mScanCallback);
         }
