@@ -59,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
     private TwoItemListAdapter mBleDeviceListAdapter;
 
     // Send data between activities
-    public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
+    public static final String BLE_ADDRESS_MESSAGE = "com.example.myfirstapp.BLE_ADDRESS_MESSAGE";
+    public static final String BLE_NAME_MESSAGE = "com.example.myfirstapp.BLE_NAME_MESSAGE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -181,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
         {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                StartConnectedActivity(view);
+                StartConnectedActivity(view, mBleDeviceList.get(position));
             }
         });
         // Update the list
@@ -193,13 +194,13 @@ public class MainActivity extends AppCompatActivity {
      * Start ConnectedActivity to handle BLE connection
      * @param view View.
      */
-    private void StartConnectedActivity(View view) {
+    private void StartConnectedActivity(View view, BleDevice device) {
         Toast.makeText(getApplicationContext(), "Item Clicked", Toast.LENGTH_SHORT).show();
 
         // Create Intent to send data
         Intent intent = new Intent(this, ConnectedActivity.class);
-        String message = "Data from MainActivity...";
-        intent.putExtra(EXTRA_MESSAGE, message);
+        intent.putExtra(BLE_ADDRESS_MESSAGE, device.getAddress());
+        intent.putExtra(BLE_NAME_MESSAGE, device.getName());
         startActivity(intent);
     }
     /**
