@@ -1,27 +1,34 @@
 package com.example.amir.e1bleplatform;
 
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.Toast;
 
+/**
+ * Description:
+ * The type Ble scanner.
+ */
 public class BleScanner {
 
     private MainActivity ma;
-    private BluetoothAdapter mBluetoothAdapter;
+    //private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
     private Handler mHandler;
     private long scanPeriod;
-    private BluetoothLeScanner mLEScanner;
+    private BluetoothLeScanner mBleScanner;
 
+    /**
+     * Description:
+     * Instantiates a new Ble scanner.
+     *
+     * @param mainActivity the main activity
+     * @param scanPeriod   the scan period
+     */
     BleScanner(MainActivity mainActivity, long scanPeriod){
         ma = mainActivity;
 
@@ -32,19 +39,33 @@ public class BleScanner {
         final BluetoothManager bluetoothManager =
                 (BluetoothManager) ma.getSystemService(Context.BLUETOOTH_SERVICE);
 
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-        mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        BluetoothAdapter mBluetoothAdapter = bluetoothManager.getAdapter();
+        mBleScanner = mBluetoothAdapter.getBluetoothLeScanner();
 
     }
 
+    /**
+     * Description:
+     * Returns the current state of scanning.
+     *
+     * @return boolean boolean
+     */
     boolean isScanning() {
         return mScanning;
     }
 
+    /**
+     * Description:
+     * Public method to start scanning for BLE devices.
+     */
     public void start() {
         scanLeDevice(true);
     }
 
+    /**
+     * Description:
+     * Public method to stop scanning for BLE devices.
+     */
     void stop() {
         scanLeDevice(false);
     }
@@ -56,23 +77,27 @@ public class BleScanner {
                 @Override
                 public void run() {
                     mScanning = false;
-                    mLEScanner.stopScan(mScanCallback);
+                    mBleScanner.stopScan(mScanCallback);
                     ma.stopScan();
                 }
             }, scanPeriod);
 
             mScanning = true;
-            mLEScanner.startScan(mScanCallback);
+            mBleScanner.startScan(mScanCallback);
         }
         else {
             mScanning = false;
-            mLEScanner.stopScan(mScanCallback);
+            mBleScanner.stopScan(mScanCallback);
         }
 
     }
 
 
-    // Device scan callback.
+    /**
+     * Description:
+     * When a new device is found, this callback is called which allows the main activity to save
+     * the BLE device.
+     */
     private ScanCallback mScanCallback = new ScanCallback() {
 
                 @Override

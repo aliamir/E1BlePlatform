@@ -2,7 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.amir.e1bleplatform">
 
-    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" />
 
     <!-- BLE devices need Bluetooth and location permissions. Why location? don't know -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -27,6 +29,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".BleConnection"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity
+            android:name=".ConnectedActivity"
+            android:label="@string/title_activity_connected"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

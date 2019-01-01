@@ -18,16 +18,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.view.View;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE;
+import static android.widget.AdapterView.OnItemClickListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,7 +56,11 @@ public class MainActivity extends AppCompatActivity {
     private HashMap<String, BluetoothDevice> mBleDevicesHashMap;
     private ListView mListOfDevicesView;
     private ArrayList<BleDevice> mBleDeviceList;
-    private TwoItemListAdapter BleDeviceListAdapter;
+    private TwoItemListAdapter mBleDeviceListAdapter;
+
+    // Send data between activities
+    public static final String BLE_ADDRESS_MESSAGE = "com.example.myfirstapp.BLE_ADDRESS_MESSAGE";
+    public static final String BLE_NAME_MESSAGE = "com.example.myfirstapp.BLE_NAME_MESSAGE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,12 +115,19 @@ public class MainActivity extends AppCompatActivity {
         mBleDevicesHashMap = new HashMap<>();
 
         // Show in ListView
-        BleDeviceListAdapter = new TwoItemListAdapter(this, R.layout.list_devices, mBleDeviceList);
-        mListOfDevicesView.setAdapter(BleDeviceListAdapter);
+        mBleDeviceListAdapter = new TwoItemListAdapter(this, R.layout.list_devices, mBleDeviceList);
+        mListOfDevicesView.setAdapter(mBleDeviceListAdapter);
 
+        // Instantiate BleScanner class to scan for 5s
         mBleScanner = new BleScanner(this, 5000);
     }
 
+    /**
+     * Description:
+     * Inflate 3 dot options menu.
+     * @param menu - Menu to create.
+     * @return - true.
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -121,6 +135,12 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * Description:
+     * What to do when Options items are selected.
+     * @param item - Item selected.
+     * @return - true/false.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -136,6 +156,14 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     *  Description:
+     *  This method is used to add a device found during a scan. It is called only in
+     * BleScanner.mScanCallback() method. This method will add BluetoothDevice to a hashmap and
+     * BleDevice to a ListArray which is used to display the data.
+     *
+     * @param device BluetoothDevice to add to hashmap.
+     */
     public void addDevice(final BluetoothDevice device){
 
         String address = device.getAddress();
@@ -148,10 +176,37 @@ public class MainActivity extends AppCompatActivity {
             BleDevice deviceToList = new BleDevice(device.getName(), address);
             mBleDeviceList.add(deviceToList);
         }
+
+        // When an item is added to the list we want it to be clickable by the user.
+        mListOfDevicesView.setOnItemClickListener(new OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                StartConnectedActivity(view, mBleDeviceList.get(position));
+            }
+        });
         // Update the list
-        BleDeviceListAdapter.notifyDataSetChanged();
+        mBleDeviceListAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Description:
+     * Start ConnectedActivity to handle BLE connection
+     * @param view View.
+     */
+    private void StartConnectedActivity(View view, BleDevice device) {
+        Toast.makeText(getApplicationContext(), "Item Clicked", Toast.LENGTH_SHORT).show();
+
+        // Create Intent to send data
+        Intent intent = new Intent(this, ConnectedActivity.class);
+        intent.putExtra(BLE_ADDRESS_MESSAGE, device.getAddress());
+        intent.putExtra(BLE_NAME_MESSAGE, device.getName());
+        startActivity(intent);
+    }
+    /**
+     * Description:
+     * Clears hashmap and ListArray of BLE devices and starts scanning for devices.
+     */
     public void startScan() {
         // Set the text of the button
         scanButton.setText(R.string.stop_scan_button_text);
@@ -163,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
         mBleDeviceList.clear();
 
         // Update the list
-        BleDeviceListAdapter.notifyDataSetChanged();
+        mBleDeviceListAdapter.notifyDataSetChanged();
 
         // Start the progress bar
         scanProgressBar.setVisibility(View.VISIBLE);
@@ -172,6 +227,10 @@ public class MainActivity extends AppCompatActivity {
         mBleScanner.start();
     }
 
+    /**
+     * Description:
+     * Stops progress bar and stops scanning for BLE devices.
+     */
     public void stopScan() {
         // Set the text of the button
         scanButton.setText(R.string.start_scan_button_text);
@@ -183,6 +242,10 @@ public class MainActivity extends AppCompatActivity {
         mBleScanner.stop();
     }
 
+    /**
+     * Description:
+     * When app stops, stop scanning.
+     */
     @Override
     protected void onStop() {
         super.onStop();
@@ -191,6 +254,10 @@ public class MainActivity extends AppCompatActivity {
         stopScan();
     }
 
+    /**
+     * Description:
+     * When app pauses, stop scanning.
+     */
     @Override
     protected void onPause() {
         super.onPause();
