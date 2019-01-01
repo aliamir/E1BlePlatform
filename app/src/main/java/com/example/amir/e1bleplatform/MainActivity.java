@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private HashMap<String, BluetoothDevice> mBleDevicesHashMap;
     private ListView mListOfDevicesView;
     private ArrayList<BleDevice> mBleDeviceList;
-    private TwoItemListAdapter BleDeviceListAdapter;
+    private TwoItemListAdapter mBleDeviceListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,12 +108,19 @@ public class MainActivity extends AppCompatActivity {
         mBleDevicesHashMap = new HashMap<>();
 
         // Show in ListView
-        BleDeviceListAdapter = new TwoItemListAdapter(this, R.layout.list_devices, mBleDeviceList);
-        mListOfDevicesView.setAdapter(BleDeviceListAdapter);
+        mBleDeviceListAdapter = new TwoItemListAdapter(this, R.layout.list_devices, mBleDeviceList);
+        mListOfDevicesView.setAdapter(mBleDeviceListAdapter);
 
+        // Instantiate BleScanner class to scan for 5s
         mBleScanner = new BleScanner(this, 5000);
     }
 
+    /**
+     * Description:
+     * Inflate 3 dot options menu.
+     * @param menu - Menu to create.
+     * @return - true.
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -121,6 +128,12 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * Description:
+     * What to do when Options items are selected.
+     * @param item - Item selected.
+     * @return - true/false.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -136,6 +149,14 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     *  Description:
+     *  This method is used to add a device found during a scan. It is called only in
+     * BleScanner.mScanCallback() method. This method will add BluetoothDevice to a hashmap and
+     * BleDevice to a ListArray which is used to display the data.
+     *
+     * @param device BluetoothDevice to add to hashmap.
+     */
     public void addDevice(final BluetoothDevice device){
 
         String address = device.getAddress();
@@ -149,9 +170,13 @@ public class MainActivity extends AppCompatActivity {
             mBleDeviceList.add(deviceToList);
         }
         // Update the list
-        BleDeviceListAdapter.notifyDataSetChanged();
+        mBleDeviceListAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Description:
+     * Clears hashmap and ListArray of BLE devices and starts scanning for devices.
+     */
     public void startScan() {
         // Set the text of the button
         scanButton.setText(R.string.stop_scan_button_text);
@@ -163,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
         mBleDeviceList.clear();
 
         // Update the list
-        BleDeviceListAdapter.notifyDataSetChanged();
+        mBleDeviceListAdapter.notifyDataSetChanged();
 
         // Start the progress bar
         scanProgressBar.setVisibility(View.VISIBLE);
@@ -172,6 +197,10 @@ public class MainActivity extends AppCompatActivity {
         mBleScanner.start();
     }
 
+    /**
+     * Description:
+     * Stops progress bar and stops scanning for BLE devices.
+     */
     public void stopScan() {
         // Set the text of the button
         scanButton.setText(R.string.start_scan_button_text);
@@ -183,6 +212,10 @@ public class MainActivity extends AppCompatActivity {
         mBleScanner.stop();
     }
 
+    /**
+     * Description:
+     * When app stops, stop scanning.
+     */
     @Override
     protected void onStop() {
         super.onStop();
@@ -191,6 +224,10 @@ public class MainActivity extends AppCompatActivity {
         stopScan();
     }
 
+    /**
+     * Description:
+     * When app pauses, stop scanning.
+     */
     @Override
     protected void onPause() {
         super.onPause();
