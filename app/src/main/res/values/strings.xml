@@ -4,4 +4,6 @@
     <string name="start_scan_button_text">Scan</string>
     <string name="scan_title_text">Devices Found</string>
     <string name="stop_scan_button_text">Stop</string>
+    <string name="title_activity_connected">Connected Device</string>
+    <string name="id_rx_intent_text">received message</string>
 </resources>

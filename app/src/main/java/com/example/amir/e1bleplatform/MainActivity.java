@@ -18,16 +18,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.view.View;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE;
+import static android.widget.AdapterView.OnItemClickListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,6 +57,9 @@ public class MainActivity extends AppCompatActivity {
     private ListView mListOfDevicesView;
     private ArrayList<BleDevice> mBleDeviceList;
     private TwoItemListAdapter mBleDeviceListAdapter;
+
+    // Send data between activities
+    public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -169,10 +175,33 @@ public class MainActivity extends AppCompatActivity {
             BleDevice deviceToList = new BleDevice(device.getName(), address);
             mBleDeviceList.add(deviceToList);
         }
+
+        // When an item is added to the list we want it to be clickable by the user.
+        mListOfDevicesView.setOnItemClickListener(new OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                StartConnectedActivity(view);
+            }
+        });
         // Update the list
         mBleDeviceListAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Description:
+     * Start ConnectedActivity to handle BLE connection
+     * @param view View.
+     */
+    private void StartConnectedActivity(View view) {
+        Toast.makeText(getApplicationContext(), "Item Clicked", Toast.LENGTH_SHORT).show();
+
+        // Create Intent to send data
+        Intent intent = new Intent(this, ConnectedActivity.class);
+        String message = "Data from MainActivity...";
+        intent.putExtra(EXTRA_MESSAGE, message);
+        startActivity(intent);
+    }
     /**
      * Description:
      * Clears hashmap and ListArray of BLE devices and starts scanning for devices.

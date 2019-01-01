@@ -30,6 +30,15 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name=".BleConnection"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity
+            android:name=".ConnectedActivity"
+            android:label="@string/title_activity_connected"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>
