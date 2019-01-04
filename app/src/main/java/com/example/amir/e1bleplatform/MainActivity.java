@@ -16,6 +16,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
@@ -59,8 +60,8 @@ public class MainActivity extends AppCompatActivity {
     private TwoItemListAdapter mBleDeviceListAdapter;
 
     // Send data between activities
-    public static final String BLE_ADDRESS_MESSAGE = "com.example.myfirstapp.BLE_ADDRESS_MESSAGE";
-    public static final String BLE_NAME_MESSAGE = "com.example.myfirstapp.BLE_NAME_MESSAGE";
+    public static final String BLE_ADDRESS_MESSAGE = "com.example.amir.e1bleplatform.BLE_ADDRESS_MESSAGE";
+    public static final String BLE_NAME_MESSAGE = "com.example.amir.e1bleplatform.BLE_NAME_MESSAGE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +69,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        // Output the thread id in logcat
+        Log.i(getString(R.string.app_name), "Service thread ID:"+Thread.currentThread().getId());
 
         mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = mBluetoothManager.getAdapter();
@@ -77,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         // Setup progress bar
         scanProgressBar = findViewById(R.id.scan_progress_bar);
 
-        // Setup scan button
+        // Setup scan button®®
         scanButton = findViewById(R.id.scan_button);
         scanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {

@@ -6,4 +6,9 @@
     <string name="stop_scan_button_text">Stop</string>
     <string name="title_activity_connected">Connected Device</string>
     <string name="id_rx_intent_text">received message</string>
+    <string name="service_name">BleConnectionService</string>
+    <string name="connected_text">Connected</string>
+    <string name="disconnected_text">Disconnected</string>
+    <string name="connect_text">Connect</string>
+    <string name="disconnect_text">Disconnect</string>
 </resources>

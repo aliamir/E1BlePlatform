@@ -31,14 +31,17 @@
         </activity>
 
         <service
-            android:name=".BleConnection"
+            android:name=".BleConnectionService"
             android:enabled="true"
             android:exported="true" />
 
         <activity
             android:name=".ConnectedActivity"
             android:label="@string/title_activity_connected"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".MainActivity"
+            >
+        </activity>
     </application>
 
 </manifest>
