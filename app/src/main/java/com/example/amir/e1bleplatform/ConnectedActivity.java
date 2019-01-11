@@ -13,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -33,6 +34,9 @@ public class ConnectedActivity extends AppCompatActivity {
     ProgressBar ConnStatusProgressBar;
     // BLE Device Class
     BleDevice mBleDevice;
+    // Textboxes for Rx/Tx
+    TextView RxTextBox;
+    EditText TxTextBox;
 
     // Intent from MainActivity
     Intent serviceIntent;
@@ -61,6 +65,9 @@ public class ConnectedActivity extends AppCompatActivity {
         // set TextView
         rxAddressView = findViewById(R.id.rx_address);
         rxNameView = findViewById(R.id.rx_name);
+        // Set TextBox for Rx/Tx data
+        RxTextBox = findViewById(R.id.rx_data_text_box);
+        TxTextBox = findViewById(R.id.tx_data_text_box);
 
         // Set Button
         CheckConnection = findViewById(R.id.conn_status_button);
