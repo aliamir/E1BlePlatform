@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -28,8 +29,11 @@ public class ConnectedActivity extends AppCompatActivity {
     TextView rxAddressView;
     TextView rxNameView;
 
-    // Button
+    // Buttons
     Button CheckConnection;
+    FloatingActionButton ClearTxButton;
+    FloatingActionButton ClearRxButton;
+
     // Progress Bar
     ProgressBar ConnStatusProgressBar;
     // BLE Device Class
@@ -92,6 +96,12 @@ public class ConnectedActivity extends AppCompatActivity {
             }
         });
 
+        ClearTxButton = findViewById(R.id.tx_clear_float_button);
+        ClearTxButton.setOnClickListener(new FloatingButtons());
+
+        ClearRxButton = findViewById(R.id.rx_clear_float_button);
+        ClearRxButton.setOnClickListener(new FloatingButtons());
+
         // Set ProgressBar
         ConnStatusProgressBar = findViewById(R.id.conn_status_progressbar);
         ConnStatusProgressBar.setVisibility(View.VISIBLE);
@@ -102,8 +112,24 @@ public class ConnectedActivity extends AppCompatActivity {
         StartBleConnectionService();
     }
 
+    class FloatingButtons implements View.OnClickListener {
+        @Override
+        public void onClick(View v){
+            switch(v.getId()) {
+                case R.id.rx_clear_float_button:
+                    RxTextBox.setText("");
+                    break;
+                case R.id.tx_clear_float_button:
+                    TxTextBox.setText("");
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         unregisterReceiver(bleServiceReceiver);
     }

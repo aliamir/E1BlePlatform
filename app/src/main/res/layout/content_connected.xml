@@ -95,6 +95,28 @@
         app:layout_constraintStart_toEndOf="@+id/tx_data_text_box"
         app:layout_constraintTop_toBottomOf="@+id/rx_name" />
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/tx_clear_float_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:clickable="true"
+        app:layout_constraintBottom_toBottomOf="@+id/tx_data_text_box"
+        app:layout_constraintEnd_toEndOf="@+id/tx_data_text_box"
+        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/rx_clear_float_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:clickable="true"
+        app:layout_constraintBottom_toBottomOf="@+id/rx_data_text_box"
+        app:layout_constraintEnd_toEndOf="@+id/rx_data_text_box"
+        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
+
 
 </android.support.constraint.ConstraintLayout>
 
