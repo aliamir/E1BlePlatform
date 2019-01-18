@@ -65,10 +65,9 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:inputType="textMultiLine"
+        android:inputType="text"
         android:hint="Sent Data"
         android:imeOptions="actionSend"
-        android:textAlignment="viewStart"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/rx_data_text_box"
         app:layout_constraintHorizontal_bias="0.5"
@@ -85,8 +84,8 @@
         android:layout_marginBottom="8dp"
         android:gravity="top|left"
         android:hint="Received Data"
-        android:inputType="textMultiLine"
-        android:paddingTop="14dp"
+        android:textSize="18dp"
+        android:paddingTop="8dp"
         android:textIsSelectable="true"
         android:verticalScrollbarPosition="defaultPosition"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -104,7 +103,8 @@
         android:clickable="true"
         app:layout_constraintBottom_toBottomOf="@+id/tx_data_text_box"
         app:layout_constraintEnd_toEndOf="@+id/tx_data_text_box"
-        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
+        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
+        android:focusable="true" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/rx_clear_float_button"
@@ -115,7 +115,19 @@
         android:clickable="true"
         app:layout_constraintBottom_toBottomOf="@+id/rx_data_text_box"
         app:layout_constraintEnd_toEndOf="@+id/rx_data_text_box"
-        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
+        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
+        android:focusable="true" />
+
+    <Button
+        android:id="@+id/send_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="2dp"
+        android:layout_marginBottom="4dp"
+        android:text="Send"
+        app:layout_constraintBottom_toTopOf="@+id/rx_data_text_box"
+        app:layout_constraintEnd_toStartOf="@+id/conn_status_button"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
 </android.support.constraint.ConstraintLayout>

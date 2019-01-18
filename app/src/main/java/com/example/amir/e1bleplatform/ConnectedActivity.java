@@ -12,7 +12,9 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -31,6 +33,7 @@ public class ConnectedActivity extends AppCompatActivity {
 
     // Buttons
     Button CheckConnection;
+    Button SendButton;
     FloatingActionButton ClearTxButton;
     FloatingActionButton ClearRxButton;
 
@@ -52,6 +55,7 @@ public class ConnectedActivity extends AppCompatActivity {
 
     // BLE States
     private enum BleState {DISCONNECTED, CONNECTED}
+    BleState mBleState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,11 +100,28 @@ public class ConnectedActivity extends AppCompatActivity {
             }
         });
 
+        TxTextBox.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEND) {
+                    String composeMsg = TxTextBox.getText().toString()+"\n";
+                    sendMldpData(composeMsg);
+                    return true;
+                }
+                return false;
+            }
+        });
+
         ClearTxButton = findViewById(R.id.tx_clear_float_button);
         ClearTxButton.setOnClickListener(new FloatingButtons());
 
         ClearRxButton = findViewById(R.id.rx_clear_float_button);
         ClearRxButton.setOnClickListener(new FloatingButtons());
+
+        // Send Button
+        SendButton = findViewById(R.id.send_button);
+        SendButton.setOnClickListener(new FloatingButtons());
+        SendButton.setVisibility(View.GONE);
 
         // Set ProgressBar
         ConnStatusProgressBar = findViewById(R.id.conn_status_progressbar);
@@ -122,9 +143,19 @@ public class ConnectedActivity extends AppCompatActivity {
                 case R.id.tx_clear_float_button:
                     TxTextBox.setText("");
                     break;
+                case R.id.send_button:
+                    String composeMsg = TxTextBox.getText().toString()+"\n";
+                    sendMldpData(composeMsg);
+                    break;
                 default:
                     break;
             }
+        }
+    }
+
+    private void sendMldpData(String msg) {
+        if (BleState.CONNECTED == mBleState) {
+            mBleConnectionService.writeMLDP(msg);
         }
     }
 
@@ -245,10 +276,14 @@ public class ConnectedActivity extends AppCompatActivity {
             case DISCONNECTED:
                 CheckConnection.setText(R.string.connect_text);
                 ConnStatusProgressBar.setVisibility(View.GONE);
+                SendButton.setVisibility(View.GONE);
+                mBleState = BleState.DISCONNECTED;
                 break;
             case CONNECTED:
                 CheckConnection.setText(R.string.disconnect_text);
                 ConnStatusProgressBar.setVisibility(View.GONE);
+                SendButton.setVisibility(View.VISIBLE);
+                mBleState = BleState.CONNECTED;
                 break;
             default:
                 break;
