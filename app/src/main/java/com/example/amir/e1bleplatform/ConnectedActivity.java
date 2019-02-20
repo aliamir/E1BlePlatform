@@ -105,6 +105,7 @@ public class ConnectedActivity extends AppCompatActivity {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEND) {
                     String composeMsg = TxTextBox.getText().toString()+"\n";
+                    TxTextBox.setText("");
                     sendMldpData(composeMsg);
                     return true;
                 }
@@ -145,6 +146,7 @@ public class ConnectedActivity extends AppCompatActivity {
                     break;
                 case R.id.send_button:
                     String composeMsg = TxTextBox.getText().toString()+"\n";
+                    TxTextBox.setText("");
                     sendMldpData(composeMsg);
                     break;
                 default:
@@ -163,18 +165,28 @@ public class ConnectedActivity extends AppCompatActivity {
     public void onPause() {
         super.onPause();
         unregisterReceiver(bleServiceReceiver);
+        stopService(serviceIntent);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         registerReceiver(bleServiceReceiver, bleServiceIntentFilter());
+        bindService();
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         mBleConnectionService.disconnect();
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mServiceConnection);                                                        //Unbind from the service handling Bluetooth
+        mBleConnectionService = null;
     }
 
     /**
@@ -241,20 +253,15 @@ public class ConnectedActivity extends AppCompatActivity {
         }
             else if (BleConnectionService.ACTION_BLE_DISCONNECTED.equals(action)) {		            //Service has disconnected from BLE device
             Log.d(TAG, "Received intent ACTION_BLE_DISCONNECTED");
-/*            if (state == State.CONNECTED) {
-                showLostConnectionDialog();                                                     //Show dialog to ask to scan for another device
-            }
-            else {
-                if (attemptingAutoConnect == true) {
-                    showAlert.dismiss();
-                }
-                clearUI();
-                if (state != State.DISCONNECTING) {                                             //See if we are not deliberately disconnecting
-                    showNoConnectDialog();                                                      //Show dialog to ask to scan for another device
-                }
-            }*/
-        UpdateConnectionState(BleState.DISCONNECTED);                                                            //Update the screen and menus
+            UpdateConnectionState(BleState.DISCONNECTED);                                                            //Update the screen and menus
         }
+            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {
+                Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
+                String data = intent.getStringExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA); //Get data as a string to display
+                if (data != null) {
+                    RxTextBox.append(data);
+                }
+            }
 /*            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {		        //Service has found new data available on BLE device
             Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
             String data = intent.getStringExtra(MldpBluetoothService.INTENT_EXTRA_SERVICE_DATA); //Get data as a string to display
