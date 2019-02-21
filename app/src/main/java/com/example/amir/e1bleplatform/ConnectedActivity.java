@@ -20,6 +20,10 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.math.BigInteger;
+
+import static java.nio.charset.Charset.defaultCharset;
+
 
 public class ConnectedActivity extends AppCompatActivity {
 
@@ -259,7 +263,9 @@ public class ConnectedActivity extends AppCompatActivity {
                 Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
                 String data = intent.getStringExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA); //Get data as a string to display
                 if (data != null) {
-                    RxTextBox.append(data);
+                    //RxTextBox.append(data);
+                    String toHex = String.format("%x", new BigInteger(1, data.getBytes(defaultCharset())));
+                    RxTextBox.append(toHex);
                 }
             }
 /*            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {		        //Service has found new data available on BLE device
