@@ -51,11 +51,11 @@ public class BleConnectionService extends Service {
     private final Queue<BluetoothGattDescriptor> descriptorWriteQueue = new LinkedList<>();
     private final Queue<BluetoothGattCharacteristic> characteristicWriteQueue = new LinkedList<>();
 
-    private BluetoothManager bluetoothManager;
-    private BluetoothAdapter bluetoothAdapter;
-    private BluetoothDevice bluetoothDevice;
-    private BluetoothGatt bluetoothGatt;
-    private BluetoothGattCharacteristic mldpDataCharacteristic, transparentTxDataCharacteristic, transparentRxDataCharacteristic;
+    private static BluetoothManager bluetoothManager;
+    private static BluetoothAdapter bluetoothAdapter;
+    private static BluetoothDevice bluetoothDevice;
+    private static BluetoothGatt bluetoothGatt;
+    private static BluetoothGattCharacteristic mldpDataCharacteristic, transparentTxDataCharacteristic, transparentRxDataCharacteristic;
 
     private int connectionAttemptCountdown = 0;
 
@@ -63,6 +63,7 @@ public class BleConnectionService extends Service {
     BleDevice mBleDevice;
     private ArrayList<BluetoothDevice> mBluetoothDevice;
     private boolean connectionStatus = false;
+    private static boolean threadStarted = false;
 
     public BleConnectionService() {
     }
@@ -74,13 +75,16 @@ public class BleConnectionService extends Service {
         mBleDevice = new BleDevice(intent.getStringExtra(ConnectedActivity.BLE_NAME_MESSAGE_SERVICE),
                 intent.getStringExtra(ConnectedActivity.BLE_ADDRESS_MESSAGE_SERVICE));
 
-        //connectionStatus = false;
-        new Thread(new Runnable() {
-        @Override
-        public void run() {
-            MaintainConnection();
+
+        if (!threadStarted) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    MaintainConnection();
+                }
+            }).start();
+            threadStarted = true;
         }
-        }).start();
 
         stopSelf();
         return super.onStartCommand(intent, flags, startId);
@@ -131,6 +135,7 @@ public class BleConnectionService extends Service {
         //throw new UnsupportedOperationException("Not yet implemented");
         return mBinder;
     }
+
 
     // ----------------------------------------------------------------------------------------------------------------
     // Implements callback methods for GATT events such as connecting, discovering services, write completion, etc.

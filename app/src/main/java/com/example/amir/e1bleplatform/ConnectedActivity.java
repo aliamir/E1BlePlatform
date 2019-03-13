@@ -53,13 +53,14 @@ public class ConnectedActivity extends AppCompatActivity {
     Intent serviceIntent;
 
     // Service info
-    private BleConnectionService mBleConnectionService;
+    private static BleConnectionService mBleConnectionService;
     private boolean isServiceBound;
     private ServiceConnection mServiceConnection;
 
     // BLE States
     private enum BleState {DISCONNECTED, CONNECTED}
     BleState mBleState;
+    private static boolean serviceStarted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,7 +136,21 @@ public class ConnectedActivity extends AppCompatActivity {
         rxAddressView.setText(mBleDevice.getAddress());
         rxNameView.setText(mBleDevice.getName());
 
-        StartBleConnectionService();
+        if (!serviceStarted) {
+            StartBleConnectionService();
+            serviceStarted = true;
+        }
+        else {
+            if (isServiceBound) {
+                mBleConnectionService.connect(mBleDevice.getAddress());
+            }
+            else {
+                bindService();
+
+                //mBleConnectionService.connect(mBleDevice.getAddress());
+            }
+        }
+
     }
 
     class FloatingButtons implements View.OnClickListener {
@@ -165,11 +180,16 @@ public class ConnectedActivity extends AppCompatActivity {
         }
     }
 
+    void UnbindBleService() {
+        unbindService(mServiceConnection);
+        isServiceBound = false;
+    }
+
     @Override
     public void onPause() {
         super.onPause();
         unregisterReceiver(bleServiceReceiver);
-        stopService(serviceIntent);
+        //stopService(serviceIntent);
     }
 
     @Override
@@ -183,13 +203,17 @@ public class ConnectedActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         mBleConnectionService.disconnect();
-
+        if (isServiceBound) {
+            UnbindBleService();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(mServiceConnection);                                                        //Unbind from the service handling Bluetooth
+        if (isServiceBound) {
+            UnbindBleService();                                                   //Unbind from the service handling Bluetooth
+        }
         mBleConnectionService = null;
     }
 
@@ -214,17 +238,25 @@ public class ConnectedActivity extends AppCompatActivity {
                 public void onServiceConnected(ComponentName name, IBinder service) {
                     BleConnectionService.BleConnectionBinder myServiceBinder = (BleConnectionService.BleConnectionBinder)service;
                     mBleConnectionService = myServiceBinder.getService();
-                    isServiceBound = true;
+
+                    //Once we're bound again, we will try to connect:
+                    if (serviceStarted) {
+                        mBleConnectionService.connect(mBleDevice.getAddress());
+                    }
                 }
 
                 @Override
                 public void onServiceDisconnected(ComponentName name) {
-                    isServiceBound = false;
                 }
             };
         }
 
+        isServiceBound = true;
+        serviceIntent = new Intent(getApplicationContext(), BleConnectionService.class);
+        serviceIntent.putExtra(BLE_NAME_MESSAGE_SERVICE, mBleDevice.getName());
+        serviceIntent.putExtra(BLE_ADDRESS_MESSAGE_SERVICE, mBleDevice.getAddress());
         bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+
 
     }
 
@@ -263,9 +295,9 @@ public class ConnectedActivity extends AppCompatActivity {
                 Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
                 String data = intent.getStringExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA); //Get data as a string to display
                 if (data != null) {
-                    //RxTextBox.append(data);
-                    String toHex = String.format("%x", new BigInteger(1, data.getBytes(defaultCharset())));
-                    RxTextBox.append(toHex);
+                    RxTextBox.append(data);
+                    //String toHex = String.format("%x", new BigInteger(1, data.getBytes(defaultCharset())));
+                    //RxTextBox.append(toHex);
                 }
             }
 /*            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {		        //Service has found new data available on BLE device
