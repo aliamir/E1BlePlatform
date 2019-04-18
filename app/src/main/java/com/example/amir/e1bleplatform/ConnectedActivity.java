@@ -15,12 +15,13 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
+impor android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 
 import static java.nio.charset.Charset.defaultCharset;
 
@@ -293,12 +294,16 @@ public class ConnectedActivity extends AppCompatActivity {
         }
             else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {
                 Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
-                String data = intent.getStringExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA); //Get data as a string to display
-                if (data != null) {
-                    RxTextBox.append(data);
-                    //String toHex = String.format("%x", new BigInteger(1, data.getBytes(defaultCharset())));
-                    //RxTextBox.append(toHex);
-                }
+                byte data[] = intent.getByteArrayExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA);
+                //String data = intent.getStringExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA); //Get data as a string to display
+                //if (data != null) {
+                    //RxTextBox.append(data);
+                    //String toHex = new String(data, StandardCharsets.UTF_8);
+                    //String toHex = BitConverter.ToString(data);
+                    //String.format("%x");
+                    String toHex = String.format("%x", new BigInteger(1, data));
+                    RxTextBox.append(toHex+" ");
+                //}
             }
 /*            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {		        //Service has found new data available on BLE device
             Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
