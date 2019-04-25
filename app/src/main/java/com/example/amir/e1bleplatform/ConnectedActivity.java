@@ -15,11 +15,13 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-impor android.widget.Button;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 
@@ -63,6 +65,9 @@ public class ConnectedActivity extends AppCompatActivity {
     BleState mBleState;
     private static boolean serviceStarted = false;
 
+    // Rx Data
+    ByteArrayOutputStream rxBytes;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +78,8 @@ public class ConnectedActivity extends AppCompatActivity {
         // Intent from MainActivity
         Intent intent = getIntent();
 
+        // Store messages in bytearray stream
+        rxBytes = new ByteArrayOutputStream();
         mBleDevice = new BleDevice(intent.getStringExtra(MainActivity.BLE_NAME_MESSAGE),
                 intent.getStringExtra(MainActivity.BLE_ADDRESS_MESSAGE));
 
@@ -295,14 +302,28 @@ public class ConnectedActivity extends AppCompatActivity {
             else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {
                 Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
                 byte data[] = intent.getByteArrayExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA);
-                //String data = intent.getStringExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA); //Get data as a string to display
-                //if (data != null) {
-                    //RxTextBox.append(data);
-                    //String toHex = new String(data, StandardCharsets.UTF_8);
-                    //String toHex = BitConverter.ToString(data);
-                    //String.format("%x");
-                    String toHex = String.format("%x", new BigInteger(1, data));
-                    RxTextBox.append(toHex+" ");
+                String toHex = String.format("%x", new BigInteger(1, data));
+                RxTextBox.append(toHex);
+
+                try {
+                    rxBytes.write(data);
+                    byte[] parseMsg = rxBytes.toByteArray();
+                    int i = 0;
+                    while (i < parseMsg.length) {
+                        // See the start of the message
+                        if (i != parseMsg.length - 1) {
+                            if ((parseMsg[i] == 0x04) && (parseMsg[i + 1] == 0x04)) {
+                            // Store this as a single message and parse
+                                ParseBleMsg(parseMsg);
+
+                            }
+                        }
+                        i++;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 //}
             }
 /*            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {		        //Service has found new data available on BLE device
@@ -320,6 +341,10 @@ public class ConnectedActivity extends AppCompatActivity {
         }*/
     }
     };
+
+    private byte[] ParseBleMsg(byte[] msg){
+
+    }
 
     private void UpdateConnectionState(BleState state) {
         switch (state) {
