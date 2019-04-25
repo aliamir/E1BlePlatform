@@ -24,6 +24,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import static java.nio.charset.Charset.defaultCharset;
 
@@ -34,6 +36,12 @@ public class ConnectedActivity extends AppCompatActivity {
     public static final String BLE_ADDRESS_MESSAGE_SERVICE = "com.example.amir.e1bleplatform.BLE_ADDRESS_MESSAGE_SERVICE";
     public static final String BLE_NAME_MESSAGE_SERVICE = "com.example.amir.e1bleplatform.BLE_NAME_MESSAGE_SERVICE";
 
+    // Message Packet Data
+    private final byte STX = 0x55;
+    private final byte ETX = 0x04;
+    private final byte DLE = 0x05;
+    private final byte MAX_CAN_PACKET_SIZE = 14;
+    private final byte CS_SIZE = 1;
     // Screen Text
     TextView rxAddressView;
     TextView rxNameView;
@@ -66,7 +74,7 @@ public class ConnectedActivity extends AppCompatActivity {
     private static boolean serviceStarted = false;
 
     // Rx Data
-    ByteArrayOutputStream rxBytes;
+    Queue<Byte> rxBytes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +86,9 @@ public class ConnectedActivity extends AppCompatActivity {
         // Intent from MainActivity
         Intent intent = getIntent();
 
-        // Store messages in bytearray stream
-        rxBytes = new ByteArrayOutputStream();
+        // Store messages in Queue
+        rxBytes = new LinkedList<>();
+
         mBleDevice = new BleDevice(intent.getStringExtra(MainActivity.BLE_NAME_MESSAGE),
                 intent.getStringExtra(MainActivity.BLE_ADDRESS_MESSAGE));
 
@@ -305,26 +314,33 @@ public class ConnectedActivity extends AppCompatActivity {
                 String toHex = String.format("%x", new BigInteger(1, data));
                 RxTextBox.append(toHex);
 
-                try {
-                    rxBytes.write(data);
-                    byte[] parseMsg = rxBytes.toByteArray();
-                    int i = 0;
-                    while (i < parseMsg.length) {
-                        // See the start of the message
-                        if (i != parseMsg.length - 1) {
-                            if ((parseMsg[i] == 0x04) && (parseMsg[i + 1] == 0x04)) {
-                            // Store this as a single message and parse
-                                ParseBleMsg(parseMsg);
-
+                // Put all the bytes into a queue
+                for (int i = 0; i < data.length; i++) {
+                    rxBytes.add(data[i]);
+                }
+                // Copy the queue to an array to parse
+                Byte[] parseMsg = new Byte[rxBytes.size()];
+                rxBytes.toArray(parseMsg);
+                for (int i = 0; i < parseMsg.length; i++) {
+                    // Since we want to check for 0x04, 0x04 we want to make sure we're not at the
+                    // end of the array
+                    if (i < (parseMsg.length - 1)) {
+                        // If we find 0x04, 0x04 that means a message is ready
+                        if ((parseMsg[i] == 0x04) && (parseMsg[i+1] == 0x04)) {
+                            // Msg is ready, load into byte[] array and parse
+                            byte msgReady[] = new byte[i+2];
+                            int j = 0;
+                            while (j < i) {
+                                msgReady[j++] = rxBytes.remove();
                             }
+                            msgReady[i] = rxBytes.remove();
+                            msgReady[i+1] = rxBytes.remove();
+                            ParseBleMsg(msgReady);
+                            break;
                         }
-                        i++;
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
 
-                //}
             }
 /*            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {		        //Service has found new data available on BLE device
             Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
@@ -343,7 +359,55 @@ public class ConnectedActivity extends AppCompatActivity {
     };
 
     private byte[] ParseBleMsg(byte[] msg){
+    byte[] parsedCanMsg = new byte[msg.length];
+    byte checksum = 0;
+    boolean saveByte = false;
+    boolean wasDle = false;
+    int dataCount = 0;
+    int i = 0;
 
+    while(i < msg.length) {
+        if (!wasDle) {
+            switch (msg[i]) {
+                case STX: // Start of packet
+                    checksum = 0;
+                    dataCount = 0;
+                    saveByte = false;
+                    break;
+                case ETX: // End of packet
+                    saveByte = false;
+                    break;
+                case DLE: // Byte stuffing
+                    wasDle = true;
+                    saveByte = false;
+                    break;
+                default:
+                    saveByte = true;
+                    break;
+            }
+        }
+        else {
+            saveByte = true;
+        }
+
+        /* Save all the bytes that aren't control bytes */
+        if (saveByte) {
+            checksum += msg[i];
+            parsedCanMsg[dataCount] = msg[i];
+            dataCount++;
+            wasDle = false;
+        }
+        i++;
+    }
+
+    // Check if the message is valid
+    // checksum: the board will send 2's compliment of the checksum. So when we add the checksum
+    // it should equal 0
+    if (checksum != 0) {
+        parsedCanMsg = null;
+    }
+
+    return parsedCanMsg;
     }
 
     private void UpdateConnectionState(BleState state) {
