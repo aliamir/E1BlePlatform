@@ -58,22 +58,22 @@
 
     <EditText
         android:id="@+id/tx_data_text_box"
-        android:gravity="top|left"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:inputType="text"
+        android:gravity="top|left"
         android:hint="Sent Data"
         android:imeOptions="actionSend"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:inputType="text"
+        app:layout_constraintBottom_toTopOf="@+id/SocText"
         app:layout_constraintEnd_toStartOf="@+id/rx_data_text_box"
         app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/rx_name"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toBottomOf="@+id/rx_name" />
 
     <TextView
         android:id="@+id/rx_data_text_box"
@@ -84,11 +84,11 @@
         android:layout_marginBottom="8dp"
         android:gravity="top|left"
         android:hint="Received Data"
-        android:textSize="18dp"
         android:paddingTop="8dp"
         android:textIsSelectable="true"
+        android:textSize="18dp"
         android:verticalScrollbarPosition="defaultPosition"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/SocValueText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tx_data_text_box"
@@ -128,6 +128,100 @@
         app:layout_constraintBottom_toTopOf="@+id/rx_data_text_box"
         app:layout_constraintEnd_toStartOf="@+id/conn_status_button"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/SocText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="SOC"
+        app:layout_constraintEnd_toStartOf="@+id/SocValueText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tx_data_text_box" />
+
+    <EditText
+        android:id="@+id/PackVText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Pack Voltage"
+        app:layout_constraintBottom_toTopOf="@+id/PackIText"
+        app:layout_constraintEnd_toStartOf="@+id/PackVValueText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/SocText" />
+
+    <EditText
+        android:id="@+id/PackIText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Pack Current"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/PackIValueText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/PackVText" />
+
+    <EditText
+        android:id="@+id/SocValueText"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="50 %"
+        app:layout_constraintBottom_toTopOf="@+id/PackVText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/SocText"
+        app:layout_constraintTop_toBottomOf="@+id/tx_data_text_box" />
+
+    <EditText
+        android:id="@+id/PackVValueText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="50.1 V"
+        app:layout_constraintBottom_toTopOf="@+id/PackIValueText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/PackVText"
+        app:layout_constraintTop_toBottomOf="@+id/SocValueText" />
+
+    <EditText
+        android:id="@+id/PackIValueText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="5.0 A"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/PackIText"
+        app:layout_constraintTop_toBottomOf="@+id/PackVValueText" />
 
 
 </android.support.constraint.ConstraintLayout>

@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -59,6 +60,8 @@ public class ConnectedActivity extends AppCompatActivity {
     // Textboxes for Rx/Tx
     TextView RxTextBox;
     EditText TxTextBox;
+
+    TextView SocTextBox, PackVTextBox, PackITextBox;
 
     // Intent from MainActivity
     Intent serviceIntent;
@@ -98,6 +101,10 @@ public class ConnectedActivity extends AppCompatActivity {
         // Set TextBox for Rx/Tx data
         RxTextBox = findViewById(R.id.rx_data_text_box);
         TxTextBox = findViewById(R.id.tx_data_text_box);
+        // Set TextBox for SOC, Pack voltage, Pack current
+        SocTextBox = findViewById(R.id.SocValueText);
+        PackVTextBox = findViewById(R.id.PackVValueText);
+        PackITextBox = findViewById(R.id.PackIValueText);
 
         // Set Button
         CheckConnection = findViewById(R.id.conn_status_button);
@@ -312,7 +319,7 @@ public class ConnectedActivity extends AppCompatActivity {
                 Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
                 byte data[] = intent.getByteArrayExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA);
                 String toHex = String.format("%x", new BigInteger(1, data));
-                RxTextBox.append(toHex);
+                //RxTextBox.append(toHex);
 
                 // Put all the bytes into a queue
                 for (int i = 0; i < data.length; i++) {
@@ -335,7 +342,7 @@ public class ConnectedActivity extends AppCompatActivity {
                             }
                             msgReady[i] = rxBytes.remove();
                             msgReady[i+1] = rxBytes.remove();
-                            ParseBleMsg(msgReady);
+                            ParseCanMessage(ParseBleMsg(msgReady));
                             break;
                         }
                     }
@@ -408,6 +415,56 @@ public class ConnectedActivity extends AppCompatActivity {
     }
 
     return parsedCanMsg;
+    }
+
+    void ParseCanMessage(byte[] msg) {
+        int messageId = 0;
+        byte isExtended = 0;
+        byte dlc = 0;
+        byte[] data = new byte[8];
+
+        messageId = msg[0];
+        messageId |= msg[1] << 8;
+        messageId |= msg[2] << 16;
+        messageId |= msg[3] << 24;
+
+        isExtended = msg[4];
+
+        dlc = msg[5];
+
+        for (int i = 0; i < data.length; i++) {
+            data[i] = msg[i+6];
+        }
+
+        switch(messageId) {
+            case 0x200:
+                // Pack Voltage
+                int packVoltageInt = 0;
+                packVoltageInt = data[0] & 0xFF;
+                packVoltageInt |= ((data[1] & 0xFF) << 8);
+                double packVoltage = (double)packVoltageInt * 0.001;
+                DecimalFormat packV = new DecimalFormat("##.##");
+                PackVTextBox.setText(packV.format(packVoltage)+" V");
+
+                // Pack Current
+                int packIInt = data[2];
+                packIInt |= data[3] << 8;
+                double packCurrent = (double)packIInt * 0.01;
+                DecimalFormat packI = new DecimalFormat("###.#");
+                PackITextBox.setText(packI.format(packCurrent) +" A");
+
+                // SOC
+                int socInt = data[6] & 0xFF;
+                socInt |= (data[7] & 0xFF) << 8;
+                double Soc = (double)socInt * 0.1;
+                DecimalFormat packSoc = new DecimalFormat("###.#");
+                SocTextBox.setText(packSoc.format(Soc) +" %");
+
+                break;
+            default:
+                break;
+
+        }
     }
 
     private void UpdateConnectionState(BleState state) {

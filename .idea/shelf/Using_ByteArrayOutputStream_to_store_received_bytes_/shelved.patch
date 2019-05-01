@@ -1,0 +1,97 @@
+Index: app/src/main/java/com/example/amir/e1bleplatform/ConnectedActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.amir.e1bleplatform;\n\nimport android.content.BroadcastReceiver;\nimport android.content.ComponentName;\nimport android.content.Context;\nimport android.content.Intent;\nimport android.content.IntentFilter;\nimport android.content.ServiceConnection;\nimport android.os.Bundle;\nimport android.os.IBinder;\nimport android.support.design.widget.FloatingActionButton;\nimport android.support.v7.app.AppCompatActivity;\nimport android.support.v7.widget.Toolbar;\nimport android.util.Log;\nimport android.view.KeyEvent;\nimport android.view.View;\nimport android.view.inputmethod.EditorInfo;\nimport android.widget.Button;\nimport android.widget.EditText;\nimport android.widget.ProgressBar;\nimport android.widget.TextView;\n\nimport java.io.ByteArrayOutputStream;\nimport java.io.IOException;\nimport java.math.BigInteger;\nimport java.nio.charset.StandardCharsets;\n\nimport static java.nio.charset.Charset.defaultCharset;\n\n\npublic class ConnectedActivity extends AppCompatActivity {\n\n    private final static String TAG = MainActivity.class.getSimpleName();                   //Activity name for logging messages on the ADB\n    public static final String BLE_ADDRESS_MESSAGE_SERVICE = \"com.example.amir.e1bleplatform.BLE_ADDRESS_MESSAGE_SERVICE\";\n    public static final String BLE_NAME_MESSAGE_SERVICE = \"com.example.amir.e1bleplatform.BLE_NAME_MESSAGE_SERVICE\";\n\n    // Screen Text\n    TextView rxAddressView;\n    TextView rxNameView;\n\n    // Buttons\n    Button CheckConnection;\n    Button SendButton;\n    FloatingActionButton ClearTxButton;\n    FloatingActionButton ClearRxButton;\n\n    // Progress Bar\n    ProgressBar ConnStatusProgressBar;\n    // BLE Device Class\n    BleDevice mBleDevice;\n    // Textboxes for Rx/Tx\n    TextView RxTextBox;\n    EditText TxTextBox;\n\n    // Intent from MainActivity\n    Intent serviceIntent;\n\n    // Service info\n    private static BleConnectionService mBleConnectionService;\n    private boolean isServiceBound;\n    private ServiceConnection mServiceConnection;\n\n    // BLE States\n    private enum BleState {DISCONNECTED, CONNECTED}\n    BleState mBleState;\n    private static boolean serviceStarted = false;\n\n    // Rx Data\n    ByteArrayOutputStream rxBytes;\n\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        setContentView(R.layout.activity_connected);\n        Toolbar toolbar = findViewById(R.id.toolbar);\n        setSupportActionBar(toolbar);\n\n        // Intent from MainActivity\n        Intent intent = getIntent();\n\n        // Store messages in bytearray stream\n        rxBytes = new ByteArrayOutputStream();\n        mBleDevice = new BleDevice(intent.getStringExtra(MainActivity.BLE_NAME_MESSAGE),\n                intent.getStringExtra(MainActivity.BLE_ADDRESS_MESSAGE));\n\n        // set TextView\n        rxAddressView = findViewById(R.id.rx_address);\n        rxNameView = findViewById(R.id.rx_name);\n        // Set TextBox for Rx/Tx data\n        RxTextBox = findViewById(R.id.rx_data_text_box);\n        TxTextBox = findViewById(R.id.tx_data_text_box);\n\n        // Set Button\n        CheckConnection = findViewById(R.id.conn_status_button);\n        CheckConnection.setOnClickListener(new View.OnClickListener() {\n            public void onClick(View v) {\n                if (isServiceBound) {\n                    boolean connectionStatus = mBleConnectionService.getConnectionStatus();\n                    if (connectionStatus) {\n                        mBleConnectionService.disconnect();\n                        ConnStatusProgressBar.setVisibility(View.VISIBLE);\n                        // Change text to disconnecting...\n                    }\n                    else {\n                        mBleConnectionService.connect(mBleDevice.getAddress());\n                        ConnStatusProgressBar.setVisibility(View.VISIBLE);\n                        // Change text to connecting...\n                    }\n                }\n                else {\n                    // Service is not bound, so can't disconnect\n                }\n            }\n        });\n\n        TxTextBox.setOnEditorActionListener(new TextView.OnEditorActionListener() {\n            @Override\n            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {\n                if (actionId == EditorInfo.IME_ACTION_SEND) {\n                    String composeMsg = TxTextBox.getText().toString()+\"\\n\";\n                    TxTextBox.setText(\"\");\n                    sendMldpData(composeMsg);\n                    return true;\n                }\n                return false;\n            }\n        });\n\n        ClearTxButton = findViewById(R.id.tx_clear_float_button);\n        ClearTxButton.setOnClickListener(new FloatingButtons());\n\n        ClearRxButton = findViewById(R.id.rx_clear_float_button);\n        ClearRxButton.setOnClickListener(new FloatingButtons());\n\n        // Send Button\n        SendButton = findViewById(R.id.send_button);\n        SendButton.setOnClickListener(new FloatingButtons());\n        SendButton.setVisibility(View.GONE);\n\n        // Set ProgressBar\n        ConnStatusProgressBar = findViewById(R.id.conn_status_progressbar);\n        ConnStatusProgressBar.setVisibility(View.VISIBLE);\n\n        rxAddressView.setText(mBleDevice.getAddress());\n        rxNameView.setText(mBleDevice.getName());\n\n        if (!serviceStarted) {\n            StartBleConnectionService();\n            serviceStarted = true;\n        }\n        else {\n            if (isServiceBound) {\n                mBleConnectionService.connect(mBleDevice.getAddress());\n            }\n            else {\n                bindService();\n\n                //mBleConnectionService.connect(mBleDevice.getAddress());\n            }\n        }\n\n    }\n\n    class FloatingButtons implements View.OnClickListener {\n        @Override\n        public void onClick(View v){\n            switch(v.getId()) {\n                case R.id.rx_clear_float_button:\n                    RxTextBox.setText(\"\");\n                    break;\n                case R.id.tx_clear_float_button:\n                    TxTextBox.setText(\"\");\n                    break;\n                case R.id.send_button:\n                    String composeMsg = TxTextBox.getText().toString()+\"\\n\";\n                    TxTextBox.setText(\"\");\n                    sendMldpData(composeMsg);\n                    break;\n                default:\n                    break;\n            }\n        }\n    }\n\n    private void sendMldpData(String msg) {\n        if (BleState.CONNECTED == mBleState) {\n            mBleConnectionService.writeMLDP(msg);\n        }\n    }\n\n    void UnbindBleService() {\n        unbindService(mServiceConnection);\n        isServiceBound = false;\n    }\n\n    @Override\n    public void onPause() {\n        super.onPause();\n        unregisterReceiver(bleServiceReceiver);\n        //stopService(serviceIntent);\n    }\n\n    @Override\n    protected void onResume() {\n        super.onResume();\n        registerReceiver(bleServiceReceiver, bleServiceIntentFilter());\n        bindService();\n    }\n\n    @Override\n    public void onBackPressed() {\n        super.onBackPressed();\n        mBleConnectionService.disconnect();\n        if (isServiceBound) {\n            UnbindBleService();\n        }\n    }\n\n    @Override\n    protected void onDestroy() {\n        super.onDestroy();\n        if (isServiceBound) {\n            UnbindBleService();                                                   //Unbind from the service handling Bluetooth\n        }\n        mBleConnectionService = null;\n    }\n\n    /**\n     * Description:\n     * Start service to maintain BLE connection\n     */\n    void StartBleConnectionService() {\n        // Create Intent to send data\n        serviceIntent = new Intent(getApplicationContext(), BleConnectionService.class);\n        serviceIntent.putExtra(BLE_NAME_MESSAGE_SERVICE, mBleDevice.getName());\n        serviceIntent.putExtra(BLE_ADDRESS_MESSAGE_SERVICE, mBleDevice.getAddress());\n        startService(serviceIntent);\n\n        bindService();\n    }\n\n    private void bindService() {\n        if (mServiceConnection == null) {\n            mServiceConnection = new ServiceConnection() {\n                @Override\n                public void onServiceConnected(ComponentName name, IBinder service) {\n                    BleConnectionService.BleConnectionBinder myServiceBinder = (BleConnectionService.BleConnectionBinder)service;\n                    mBleConnectionService = myServiceBinder.getService();\n\n                    //Once we're bound again, we will try to connect:\n                    if (serviceStarted) {\n                        mBleConnectionService.connect(mBleDevice.getAddress());\n                    }\n                }\n\n                @Override\n                public void onServiceDisconnected(ComponentName name) {\n                }\n            };\n        }\n\n        isServiceBound = true;\n        serviceIntent = new Intent(getApplicationContext(), BleConnectionService.class);\n        serviceIntent.putExtra(BLE_NAME_MESSAGE_SERVICE, mBleDevice.getName());\n        serviceIntent.putExtra(BLE_ADDRESS_MESSAGE_SERVICE, mBleDevice.getAddress());\n        bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);\n\n\n    }\n\n    // ----------------------------------------------------------------------------------------------------------------\n    // Intent filter to add Intent values that will be broadcast by the MldpBluetoothService to the bleServiceReceiver BroadcastReceiver\n    private static IntentFilter bleServiceIntentFilter() {\n        final IntentFilter intentFilter = new IntentFilter();\n        intentFilter.addAction(BleConnectionService.ACTION_BLE_REQ_ENABLE_BT);\n        intentFilter.addAction(BleConnectionService.ACTION_BLE_CONNECTED);\n        intentFilter.addAction(BleConnectionService.ACTION_BLE_DISCONNECTED);\n        intentFilter.addAction(BleConnectionService.ACTION_BLE_DATA_RECEIVED);\n        return intentFilter;\n    }\n\n    // ----------------------------------------------------------------------------------------------------------------\n    // BroadcastReceiver handles various events fired by the MldpBluetoothService service.\n    private final BroadcastReceiver bleServiceReceiver = new BroadcastReceiver() {\n        @Override\n        public void onReceive(Context context, Intent intent) {\n        final String action = intent.getAction();\n            if (BleConnectionService.ACTION_BLE_CONNECTED.equals(intent.getAction())) {\t\t\t                //Service has connected to BLE device\n            //connectTimeoutHandler.removeCallbacks(abortConnection);                             //Stop the connection timeout handler from calling the runnable to stop the connection attempt\n            Log.d(TAG, \"Received intent  ACTION_BLE_CONNECTED\");\n            UpdateConnectionState(BleState.CONNECTED);\n            //state = State.CONNECTED;\n            //updateConnectionState();                                                            //Update the screen and menus\n//            if (attemptingAutoConnect == true) {\n//                showAlert.dismiss();\n//            }\n        }\n            else if (BleConnectionService.ACTION_BLE_DISCONNECTED.equals(action)) {\t\t            //Service has disconnected from BLE device\n            Log.d(TAG, \"Received intent ACTION_BLE_DISCONNECTED\");\n            UpdateConnectionState(BleState.DISCONNECTED);                                                            //Update the screen and menus\n        }\n            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {\n                Log.d(TAG, \"Received intent ACTION_BLE_DATA_RECEIVED\");\n                byte data[] = intent.getByteArrayExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA);\n                String toHex = String.format(\"%x\", new BigInteger(1, data));\n                RxTextBox.append(toHex);\n\n                try {\n                    rxBytes.write(data);\n                    byte[] parseMsg = rxBytes.toByteArray();\n                    int i = 0;\n                    while (i < parseMsg.length) {\n                        // See the start of the message\n                        if (i != parseMsg.length - 1) {\n                            if ((parseMsg[i] == 0x04) && (parseMsg[i + 1] == 0x04)) {\n                            // Store this as a single message and parse\n                                ParseBleMsg(parseMsg);\n\n                            }\n                        }\n                        i++;\n                    }\n                } catch (IOException e) {\n                    e.printStackTrace();\n                }\n\n                //}\n            }\n/*            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {\t\t        //Service has found new data available on BLE device\n            Log.d(TAG, \"Received intent ACTION_BLE_DATA_RECEIVED\");\n            String data = intent.getStringExtra(MldpBluetoothService.INTENT_EXTRA_SERVICE_DATA); //Get data as a string to display\n//                String data = null;\n//                try {\n//                    data = new String(intent.getByteArrayExtra(MldpBluetoothService.INTENT_EXTRA_SERVICE_DATA), \"UTF-8\"); // Example for bytes instead of string\n//                } catch (UnsupportedEncodingException e) {\n//                    e.printStackTrace();\n//                }\n            if (data != null) {\n                textIncoming.append(data);\n            }\n        }*/\n    }\n    };\n\n    private byte[] ParseBleMsg(byte[] msg){\n\n    }\n\n    private void UpdateConnectionState(BleState state) {\n        switch (state) {\n            case DISCONNECTED:\n                CheckConnection.setText(R.string.connect_text);\n                ConnStatusProgressBar.setVisibility(View.GONE);\n                SendButton.setVisibility(View.GONE);\n                mBleState = BleState.DISCONNECTED;\n                break;\n            case CONNECTED:\n                CheckConnection.setText(R.string.disconnect_text);\n                ConnStatusProgressBar.setVisibility(View.GONE);\n                SendButton.setVisibility(View.VISIBLE);\n                mBleState = BleState.CONNECTED;\n                break;\n            default:\n                break;\n        }\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/amir/e1bleplatform/ConnectedActivity.java	(revision 58419ae604d7b5633f195ae9f19ed7606b9e123b)
++++ app/src/main/java/com/example/amir/e1bleplatform/ConnectedActivity.java	(date 1556203409707)
+@@ -24,6 +24,8 @@
+ import java.io.IOException;
+ import java.math.BigInteger;
+ import java.nio.charset.StandardCharsets;
++import java.util.LinkedList;
++import java.util.Queue;
+ 
+ import static java.nio.charset.Charset.defaultCharset;
+ 
+@@ -66,7 +68,7 @@
+     private static boolean serviceStarted = false;
+ 
+     // Rx Data
+-    ByteArrayOutputStream rxBytes;
++    Queue<Byte> rxBytes;
+ 
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+@@ -79,7 +81,8 @@
+         Intent intent = getIntent();
+ 
+         // Store messages in bytearray stream
+-        rxBytes = new ByteArrayOutputStream();
++        rxBytes = new LinkedList<>();
++
+         mBleDevice = new BleDevice(intent.getStringExtra(MainActivity.BLE_NAME_MESSAGE),
+                 intent.getStringExtra(MainActivity.BLE_ADDRESS_MESSAGE));
+ 
+@@ -304,27 +307,36 @@
+                 byte data[] = intent.getByteArrayExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA);
+                 String toHex = String.format("%x", new BigInteger(1, data));
+                 RxTextBox.append(toHex);
++                for (int i = 0; i < data.length; i++) {
++                    rxBytes.add(data[i]);
++                }
+ 
+                 try {
+-                    rxBytes.write(data);
+-                    byte[] parseMsg = rxBytes.toByteArray();
++                    Object[] parseMsg;
++                    parseMsg = rxBytes.toArray();
+                     int i = 0;
++
+                     while (i < parseMsg.length) {
+-                        // See the start of the message
+-                        if (i != parseMsg.length - 1) {
+-                            if ((parseMsg[i] == 0x04) && (parseMsg[i + 1] == 0x04)) {
+-                            // Store this as a single message and parse
+-                                ParseBleMsg(parseMsg);
++                        if (i != (parseMsg.length - 1)) {
+ 
+-                            }
+                         }
+-                        i++;
+                     }
++//                    while (i < rxBytes.size()) {
++//                        // See the start of the message
++//                        if (i != rxBytes.size() - 1) {
++//                            if ((rxBytes. == 0x04) && (rxBytes.peek(i + 1) == 0x04)) {
++//                            // Store this as a single message and parse
++//                                ParseBleMsg(parseMsg);
++//
++//                            }
++//                        }
++//                        i++;
++//                    }
+                 } catch (IOException e) {
+                     e.printStackTrace();
+                 }
+ 
+-                //}
++
+             }
+ /*            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {		        //Service has found new data available on BLE device
+             Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
+@@ -342,9 +354,9 @@
+     }
+     };
+ 
+-    private byte[] ParseBleMsg(byte[] msg){
+-
+-    }
++//    private byte[] ParseBleMsg(byte[] msg){
++//
++//    }
+ 
+     private void UpdateConnectionState(BleState state) {
+         switch (state) {
