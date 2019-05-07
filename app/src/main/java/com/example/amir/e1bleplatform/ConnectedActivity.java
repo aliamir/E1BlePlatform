@@ -342,7 +342,10 @@ public class ConnectedActivity extends AppCompatActivity {
                             }
                             msgReady[i] = rxBytes.remove();
                             msgReady[i+1] = rxBytes.remove();
-                            ParseCanMessage(ParseBleMsg(msgReady));
+                            byte[] parsedRxMsg = ParseBleMsg(msgReady);
+                            if (parsedRxMsg != null) {
+                                ParseCanMessage(parsedRxMsg);
+                            }
                             break;
                         }
                     }
@@ -366,55 +369,55 @@ public class ConnectedActivity extends AppCompatActivity {
     };
 
     private byte[] ParseBleMsg(byte[] msg){
-    byte[] parsedCanMsg = new byte[msg.length];
-    byte checksum = 0;
-    boolean saveByte = false;
-    boolean wasDle = false;
-    int dataCount = 0;
-    int i = 0;
+        byte[] parsedCanMsg = new byte[msg.length];
+        byte checksum = 0;
+        boolean saveByte = false;
+        boolean wasDle = false;
+        int dataCount = 0;
+        int i = 0;
 
-    while(i < msg.length) {
-        if (!wasDle) {
-            switch (msg[i]) {
-                case STX: // Start of packet
-                    checksum = 0;
-                    dataCount = 0;
-                    saveByte = false;
-                    break;
-                case ETX: // End of packet
-                    saveByte = false;
-                    break;
-                case DLE: // Byte stuffing
-                    wasDle = true;
-                    saveByte = false;
-                    break;
-                default:
-                    saveByte = true;
-                    break;
+        while(i < msg.length) {
+            if (!wasDle) {
+                switch (msg[i]) {
+                    case STX: // Start of packet
+                        checksum = 0;
+                        dataCount = 0;
+                        saveByte = false;
+                        break;
+                    case ETX: // End of packet
+                        saveByte = false;
+                        break;
+                    case DLE: // Byte stuffing
+                        wasDle = true;
+                        saveByte = false;
+                        break;
+                    default:
+                        saveByte = true;
+                        break;
+                }
             }
-        }
-        else {
-            saveByte = true;
+            else {
+                saveByte = true;
+            }
+
+            /* Save all the bytes that aren't control bytes */
+            if (saveByte) {
+                checksum += msg[i];
+                parsedCanMsg[dataCount] = msg[i];
+                dataCount++;
+                wasDle = false;
+            }
+            i++;
         }
 
-        /* Save all the bytes that aren't control bytes */
-        if (saveByte) {
-            checksum += msg[i];
-            parsedCanMsg[dataCount] = msg[i];
-            dataCount++;
-            wasDle = false;
+        // Check if the message is valid
+        // checksum: the board will send 2's compliment of the checksum. So when we add the checksum
+        // it should equal 0
+        if (checksum != 0) {
+            parsedCanMsg = null;
         }
-        i++;
-    }
 
-    // Check if the message is valid
-    // checksum: the board will send 2's compliment of the checksum. So when we add the checksum
-    // it should equal 0
-    if (checksum != 0) {
-        parsedCanMsg = null;
-    }
-
-    return parsedCanMsg;
+        return parsedCanMsg;
     }
 
     void ParseCanMessage(byte[] msg) {
@@ -447,10 +450,10 @@ public class ConnectedActivity extends AppCompatActivity {
                 PackVTextBox.setText(packV.format(packVoltage)+" V");
 
                 // Pack Current
-                int packIInt = data[2];
+                int packIInt = data[2] & 0xFF;
                 packIInt |= data[3] << 8;
                 double packCurrent = (double)packIInt * 0.01;
-                DecimalFormat packI = new DecimalFormat("###.#");
+                DecimalFormat packI = new DecimalFormat("###.##");
                 PackITextBox.setText(packI.format(packCurrent) +" A");
 
                 // SOC
