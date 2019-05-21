@@ -421,22 +421,24 @@ public class ConnectedActivity extends AppCompatActivity {
     }
 
     void ParseCanMessage(byte[] msg) {
+        byte cmd = 0;
         int messageId = 0;
         byte isExtended = 0;
         byte dlc = 0;
         byte[] data = new byte[8];
 
-        messageId = msg[0];
-        messageId |= msg[1] << 8;
-        messageId |= msg[2] << 16;
-        messageId |= msg[3] << 24;
+        cmd = msg[0];
+        messageId = msg[1];
+        messageId |= msg[2] << 8;
+        messageId |= msg[3] << 16;
+        messageId |= msg[4] << 24;
 
-        isExtended = msg[4];
+        isExtended = msg[5];
 
-        dlc = msg[5];
+        dlc = msg[6];
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = msg[i+6];
+            data[i] = msg[i+7];
         }
 
         switch(messageId) {
