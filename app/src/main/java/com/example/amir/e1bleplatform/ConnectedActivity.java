@@ -20,7 +20,13 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import static java.nio.charset.Charset.defaultCharset;
 
@@ -31,6 +37,12 @@ public class ConnectedActivity extends AppCompatActivity {
     public static final String BLE_ADDRESS_MESSAGE_SERVICE = "com.example.amir.e1bleplatform.BLE_ADDRESS_MESSAGE_SERVICE";
     public static final String BLE_NAME_MESSAGE_SERVICE = "com.example.amir.e1bleplatform.BLE_NAME_MESSAGE_SERVICE";
 
+    // Message Packet Data
+    private final byte STX = 0x55;
+    private final byte ETX = 0x04;
+    private final byte DLE = 0x05;
+    private final byte MAX_CAN_PACKET_SIZE = 14;
+    private final byte CS_SIZE = 1;
     // Screen Text
     TextView rxAddressView;
     TextView rxNameView;
@@ -49,6 +61,8 @@ public class ConnectedActivity extends AppCompatActivity {
     TextView RxTextBox;
     EditText TxTextBox;
 
+    TextView SocTextBox, PackVTextBox, PackITextBox;
+
     // Intent from MainActivity
     Intent serviceIntent;
 
@@ -62,6 +76,9 @@ public class ConnectedActivity extends AppCompatActivity {
     BleState mBleState;
     private static boolean serviceStarted = false;
 
+    // Rx Data
+    Queue<Byte> rxBytes;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +89,9 @@ public class ConnectedActivity extends AppCompatActivity {
         // Intent from MainActivity
         Intent intent = getIntent();
 
+        // Store messages in Queue
+        rxBytes = new LinkedList<>();
+
         mBleDevice = new BleDevice(intent.getStringExtra(MainActivity.BLE_NAME_MESSAGE),
                 intent.getStringExtra(MainActivity.BLE_ADDRESS_MESSAGE));
 
@@ -81,6 +101,10 @@ public class ConnectedActivity extends AppCompatActivity {
         // Set TextBox for Rx/Tx data
         RxTextBox = findViewById(R.id.rx_data_text_box);
         TxTextBox = findViewById(R.id.tx_data_text_box);
+        // Set TextBox for SOC, Pack voltage, Pack current
+        SocTextBox = findViewById(R.id.SocValueText);
+        PackVTextBox = findViewById(R.id.PackVValueText);
+        PackITextBox = findViewById(R.id.PackIValueText);
 
         // Set Button
         CheckConnection = findViewById(R.id.conn_status_button);
@@ -293,12 +317,40 @@ public class ConnectedActivity extends AppCompatActivity {
         }
             else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {
                 Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
-                String data = intent.getStringExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA); //Get data as a string to display
-                if (data != null) {
-                    RxTextBox.append(data);
-                    //String toHex = String.format("%x", new BigInteger(1, data.getBytes(defaultCharset())));
-                    //RxTextBox.append(toHex);
+                byte data[] = intent.getByteArrayExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA);
+                String toHex = String.format("%x", new BigInteger(1, data));
+                //RxTextBox.append(toHex);
+
+                // Put all the bytes into a queue
+                for (int i = 0; i < data.length; i++) {
+                    rxBytes.add(data[i]);
                 }
+                // Copy the queue to an array to parse
+                Byte[] parseMsg = new Byte[rxBytes.size()];
+                rxBytes.toArray(parseMsg);
+                for (int i = 0; i < parseMsg.length; i++) {
+                    // Since we want to check for 0x04, 0x04 we want to make sure we're not at the
+                    // end of the array
+                    if (i < (parseMsg.length - 1)) {
+                        // If we find 0x04, 0x04 that means a message is ready
+                        if ((parseMsg[i] == 0x04) && (parseMsg[i+1] == 0x04)) {
+                            // Msg is ready, load into byte[] array and parse
+                            byte msgReady[] = new byte[i+2];
+                            int j = 0;
+                            while (j < i) {
+                                msgReady[j++] = rxBytes.remove();
+                            }
+                            msgReady[i] = rxBytes.remove();
+                            msgReady[i+1] = rxBytes.remove();
+                            byte[] parsedRxMsg = ParseBleMsg(msgReady);
+                            if (parsedRxMsg != null) {
+                                ParseCanMessage(parsedRxMsg);
+                            }
+                            break;
+                        }
+                    }
+                }
+
             }
 /*            else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {		        //Service has found new data available on BLE device
             Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
@@ -315,6 +367,110 @@ public class ConnectedActivity extends AppCompatActivity {
         }*/
     }
     };
+
+    private byte[] ParseBleMsg(byte[] msg){
+        byte[] parsedCanMsg = new byte[msg.length];
+        byte checksum = 0;
+        boolean saveByte = false;
+        boolean wasDle = false;
+        int dataCount = 0;
+        int i = 0;
+
+        while(i < msg.length) {
+            if (!wasDle) {
+                switch (msg[i]) {
+                    case STX: // Start of packet
+                        checksum = 0;
+                        dataCount = 0;
+                        saveByte = false;
+                        break;
+                    case ETX: // End of packet
+                        saveByte = false;
+                        break;
+                    case DLE: // Byte stuffing
+                        wasDle = true;
+                        saveByte = false;
+                        break;
+                    default:
+                        saveByte = true;
+                        break;
+                }
+            }
+            else {
+                saveByte = true;
+            }
+
+            /* Save all the bytes that aren't control bytes */
+            if (saveByte) {
+                checksum += msg[i];
+                parsedCanMsg[dataCount] = msg[i];
+                dataCount++;
+                wasDle = false;
+            }
+            i++;
+        }
+
+        // Check if the message is valid
+        // checksum: the board will send 2's compliment of the checksum. So when we add the checksum
+        // it should equal 0
+        if (checksum != 0) {
+            parsedCanMsg = null;
+        }
+
+        return parsedCanMsg;
+    }
+
+    void ParseCanMessage(byte[] msg) {
+        byte cmd = 0;
+        int messageId = 0;
+        byte isExtended = 0;
+        byte dlc = 0;
+        byte[] data = new byte[8];
+
+        cmd = msg[0];
+        messageId = msg[1];
+        messageId |= msg[2] << 8;
+        messageId |= msg[3] << 16;
+        messageId |= msg[4] << 24;
+
+        isExtended = msg[5];
+
+        dlc = msg[6];
+
+        for (int i = 0; i < data.length; i++) {
+            data[i] = msg[i+7];
+        }
+
+        switch(messageId) {
+            case 0x200:
+                // Pack Voltage
+                int packVoltageInt = 0;
+                packVoltageInt = data[0] & 0xFF;
+                packVoltageInt |= ((data[1] & 0xFF) << 8);
+                double packVoltage = (double)packVoltageInt * 0.001;
+                DecimalFormat packV = new DecimalFormat("##.##");
+                PackVTextBox.setText(packV.format(packVoltage)+" V");
+
+                // Pack Current
+                int packIInt = data[2] & 0xFF;
+                packIInt |= data[3] << 8;
+                double packCurrent = (double)packIInt * 0.01;
+                DecimalFormat packI = new DecimalFormat("###.##");
+                PackITextBox.setText(packI.format(packCurrent) +" A");
+
+                // SOC
+                int socInt = data[6] & 0xFF;
+                socInt |= (data[7] & 0xFF) << 8;
+                double Soc = (double)socInt * 0.1;
+                DecimalFormat packSoc = new DecimalFormat("###.#");
+                SocTextBox.setText(packSoc.format(Soc) +" %");
+
+                break;
+            default:
+                break;
+
+        }
+    }
 
     private void UpdateConnectionState(BleState state) {
         switch (state) {

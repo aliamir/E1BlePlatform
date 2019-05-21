@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
 
+import static android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8;
+
 public class BleConnectionService extends Service {
     private final static String TAG = ConnectedActivity.class.getName();                   //Service name for logging messages on the ADB
 
@@ -278,7 +280,7 @@ public class BleConnectionService extends Service {
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             try {
                 if (UUID_MLDP_DATA_PRIVATE_CHAR.equals(characteristic.getUuid()) || UUID_TRANSPARENT_TX_PRIVATE_CHAR.equals(characteristic.getUuid())) {                     //See if it is the MLDP data characteristic
-                    String dataValue = characteristic.getStringValue(0);                                //Get the data in string format
+                    byte dataValue[] = characteristic.getValue();                                //Get the data in string format
                     //byte[] dataValue = characteristic.getValue();                                     //Example of getting data in a byte array
                     Log.d(TAG, "New notification or indication");
                     final Intent intent = new Intent(ACTION_BLE_DATA_RECEIVED);                         //Create the intent to announce the new data
