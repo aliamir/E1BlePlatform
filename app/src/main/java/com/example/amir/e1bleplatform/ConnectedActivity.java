@@ -50,6 +50,7 @@ public class ConnectedActivity extends AppCompatActivity {
     // Buttons
     Button CheckConnection;
     Button SendButton;
+    Button HwRev;
     FloatingActionButton ClearTxButton;
     FloatingActionButton ClearRxButton;
 
@@ -160,6 +161,20 @@ public class ConnectedActivity extends AppCompatActivity {
         rxAddressView.setText(mBleDevice.getAddress());
         rxNameView.setText(mBleDevice.getName());
 
+        // Send HW Revision Command Button
+        HwRev = findViewById(R.id.hwRevButton);
+        HwRev.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (BleState.CONNECTED == mBleState) {
+                    byte value[] = {(byte) 0x02};
+                    byte checksumbyte[] = createPacket(value);
+                    String HexString = byteArrayToHex(checksumbyte);
+                    HexString = HexString.replaceAll("..", "$0 ").trim();
+                    TxTextBox.setText(HexString);
+                    mBleConnectionService.writeMLDP(checksumbyte);
+                }
+            }
+        });
         if (!serviceStarted) {
             StartBleConnectionService();
             serviceStarted = true;
@@ -318,8 +333,8 @@ public class ConnectedActivity extends AppCompatActivity {
             else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {
                 Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
                 byte data[] = intent.getByteArrayExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA);
-                String toHex = String.format("%x", new BigInteger(1, data));
-                //RxTextBox.append(toHex);
+                //String toHex = String.format("%x", new BigInteger(1, data)); //Show all data in textbox
+
 
                 // Put all the bytes into a queue
                 for (int i = 0; i < data.length; i++) {
@@ -343,9 +358,15 @@ public class ConnectedActivity extends AppCompatActivity {
                             msgReady[i] = rxBytes.remove();
                             msgReady[i+1] = rxBytes.remove();
                             byte[] parsedRxMsg = ParseBleMsg(msgReady);
-                            if (parsedRxMsg != null) {
+                            if ((parsedRxMsg != null) && (parsedRxMsg[0] == 0x01)) {
                                 ParseCanMessage(parsedRxMsg);
                             }
+                            else{
+                                String toHex = byteArrayToHex(msgReady);
+                                toHex = toHex.replaceAll("..", "$0 ").trim();
+                                RxTextBox.append(toHex);
+                            }
+
                             break;
                         }
                     }
@@ -469,6 +490,58 @@ public class ConnectedActivity extends AppCompatActivity {
             default:
                 break;
 
+        }
+    }
+
+    public static String byteArrayToHex(byte[] a) {
+        StringBuilder sb = new StringBuilder(a.length * 2);
+        for(byte b : a)
+
+            sb.append(String.format("%02X", b & 0xff));
+
+        return sb.toString();
+    }
+
+    private byte[] createPacket(byte[] data){
+        try {
+            ByteArrayOutputStream bytesToSend = new ByteArrayOutputStream();
+            int checkSum = 0;
+            bytesToSend.write(STX);
+            bytesToSend.write(STX);
+            //look at each byte for control characters and add checksum
+            for (int offset = 0; offset < data.length; offset++) {
+                if (true == checkForControlChars(data[offset])) {
+                    bytesToSend.write(DLE);
+                }
+                bytesToSend.write(data[offset]);
+                checkSum += data[offset];
+            }
+            checkSum = ~checkSum + 1;
+            //check if checksum needs a delimiter
+            if (true == checkForControlChars((byte) checkSum)) {
+                bytesToSend.write(DLE);
+            }
+            bytesToSend.write((byte) checkSum);
+            bytesToSend.write(ETX);
+            bytesToSend.write(ETX);
+            return bytesToSend.toByteArray();
+        }catch (Exception e){
+            e.getMessage();
+            return new ByteArrayOutputStream().toByteArray();
+        }
+    }
+
+    public boolean checkForControlChars(byte abc){
+        try {
+
+            if(STX==abc||ETX==abc|DLE==abc){
+                return true;
+            }else {
+                return false;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
         }
     }
 
