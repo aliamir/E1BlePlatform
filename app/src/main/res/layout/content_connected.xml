@@ -38,7 +38,7 @@
         android:layout_marginEnd="4dp"
         android:layout_marginBottom="8dp"
         android:text="@string/disconnect_text"
-        app:layout_constraintBottom_toTopOf="@+id/rx_data_text_box"
+        app:layout_constraintBottom_toTopOf="@+id/hwRevButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -50,9 +50,9 @@
         android:layout_alignParentTop="true"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="4dp"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="8dp"
         android:layout_toStartOf="@+id/conn_status_button"
-        app:layout_constraintBottom_toTopOf="@+id/rx_data_text_box"
+        app:layout_constraintBottom_toTopOf="@+id/hwRevButton"
         app:layout_constraintEnd_toStartOf="@+id/conn_status_button"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -73,7 +73,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/rx_name" />
+        app:layout_constraintTop_toBottomOf="@+id/hwRevButton" />
 
     <TextView
         android:id="@+id/rx_data_text_box"
@@ -92,7 +92,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tx_data_text_box"
-        app:layout_constraintTop_toBottomOf="@+id/rx_name" />
+        app:layout_constraintTop_toBottomOf="@+id/hwRevButton" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/tx_clear_float_button"
@@ -123,9 +123,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="2dp"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="8dp"
         android:text="Send"
-        app:layout_constraintBottom_toTopOf="@+id/rx_data_text_box"
+        app:layout_constraintBottom_toTopOf="@+id/hwRevButton"
         app:layout_constraintEnd_toStartOf="@+id/conn_status_button"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -222,6 +222,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/PackIText"
         app:layout_constraintTop_toBottomOf="@+id/PackVValueText" />
+
+    <Button
+        android:id="@+id/hwRevButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="8dp"
+        android:text="HW REV"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rx_name" />
 
 
 </android.support.constraint.ConstraintLayout>
