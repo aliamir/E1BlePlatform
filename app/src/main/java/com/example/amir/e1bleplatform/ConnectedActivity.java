@@ -52,6 +52,7 @@ public class ConnectedActivity extends AppCompatActivity {
     Button SendButton;
     Button HwRev;
     Button SwRev;
+    Button Disconn;
     FloatingActionButton ClearTxButton;
     FloatingActionButton ClearRxButton;
 
@@ -183,6 +184,20 @@ public class ConnectedActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (BleState.CONNECTED == mBleState) {
                     byte value[] = {(byte) 0x03};
+                    byte checksumbyte[] = createPacket(value);
+                    String HexString = byteArrayToHex(checksumbyte);
+                    HexString = HexString.replaceAll("..", "$0 ").trim();
+                    TxTextBox.setText(HexString);
+                    mBleConnectionService.writeMLDP(checksumbyte);
+                }
+            }
+        });
+
+        Disconn = findViewById(R.id.disconnButton);
+        Disconn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (BleState.CONNECTED == mBleState) {
+                    byte value[] = {(byte) 0x20, 0x03};
                     byte checksumbyte[] = createPacket(value);
                     String HexString = byteArrayToHex(checksumbyte);
                     HexString = HexString.replaceAll("..", "$0 ").trim();
