@@ -8,7 +8,17 @@
         tools:context=".ConnectedActivity"
         tools:showIn="@layout/activity_connected">
 
-    <TextView
+        <Button
+            android:id="@+id/setCanBitrateButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="RBR"
+            app:layout_constraintStart_toEndOf="@+id/resetModuleCapButton"
+            app:layout_constraintTop_toBottomOf="@+id/swRevButton"
+            android:layout_marginStart="2dp" />
+
+        <TextView
         android:id="@+id/rx_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -73,7 +83,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/hwRevButton" />
+        app:layout_constraintTop_toBottomOf="@+id/resetModuleCapButton" />
 
     <TextView
         android:id="@+id/rx_data_text_box"
@@ -252,6 +262,26 @@
         android:text="DISCONN"
         app:layout_constraintStart_toEndOf="@+id/swRevButton"
         app:layout_constraintTop_toBottomOf="@+id/rx_name" />
+
+    <Button
+        android:id="@+id/getModuleCapButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="8dp"
+        android:text="GMC"
+        app:layout_constraintStart_toEndOf="@+id/disconnButton"
+        app:layout_constraintTop_toBottomOf="@+id/rx_name" />
+
+    <Button
+        android:id="@+id/resetModuleCapButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="2dp"
+        android:text="RMC"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/hwRevButton" />
 
 
 </android.support.constraint.ConstraintLayout>

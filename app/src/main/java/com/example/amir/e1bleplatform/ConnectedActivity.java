@@ -53,6 +53,9 @@ public class ConnectedActivity extends AppCompatActivity {
     Button HwRev;
     Button SwRev;
     Button Disconn;
+    Button GetModuleCap;
+    Button ResetModuleCap;
+    Button SetCanBitrate;
     FloatingActionButton ClearTxButton;
     FloatingActionButton ClearRxButton;
 
@@ -193,6 +196,7 @@ public class ConnectedActivity extends AppCompatActivity {
             }
         });
 
+        // Send Disconnect Command Button
         Disconn = findViewById(R.id.disconnButton);
         Disconn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -206,6 +210,53 @@ public class ConnectedActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Send Get Module Capacity Command Button
+        GetModuleCap = findViewById(R.id.getModuleCapButton);
+        GetModuleCap.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (BleState.CONNECTED == mBleState) {
+                    byte value[] = {(byte) 0x06, 0x01};
+                    byte checksumbyte[] = createPacket(value);
+                    String HexString = byteArrayToHex(checksumbyte);
+                    HexString = HexString.replaceAll("..", "$0 ").trim();
+                    TxTextBox.setText(HexString);
+                    mBleConnectionService.writeMLDP(checksumbyte);
+                }
+            }
+        });
+
+        // Send Reset Module Capacity Command Button
+        ResetModuleCap = findViewById(R.id.resetModuleCapButton);
+        ResetModuleCap.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (BleState.CONNECTED == mBleState) {
+                    byte value[] = {(byte) 0x06, 0x02};
+                    byte checksumbyte[] = createPacket(value);
+                    String HexString = byteArrayToHex(checksumbyte);
+                    HexString = HexString.replaceAll("..", "$0 ").trim();
+                    TxTextBox.setText(HexString);
+                    mBleConnectionService.writeMLDP(checksumbyte);
+                }
+            }
+        });
+
+        // Send Set CAN Bitrate Command Button
+        SetCanBitrate = findViewById(R.id.setCanBitrateButton);
+        SetCanBitrate.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (BleState.CONNECTED == mBleState) {
+//                                         0x47=write  0x80 = manual
+                    byte value[] = {(byte) 0x47,(byte) 0x83,(byte) 9,(byte) 0,(byte) 0,(byte) 0}; // 0x47 = write bitrate, 0x07 = read bitrate
+                    byte checksumbyte[] = createPacket(value);
+                    String HexString = byteArrayToHex(checksumbyte);
+                    HexString = HexString.replaceAll("..", "$0 ").trim();
+                    TxTextBox.setText(HexString);
+                    mBleConnectionService.writeMLDP(checksumbyte);
+                }
+            }
+        });
+
 
         if (!serviceStarted) {
             StartBleConnectionService();
@@ -365,8 +416,8 @@ public class ConnectedActivity extends AppCompatActivity {
             else if (BleConnectionService.ACTION_BLE_DATA_RECEIVED.equals(action)) {
                 Log.d(TAG, "Received intent ACTION_BLE_DATA_RECEIVED");
                 byte data[] = intent.getByteArrayExtra(BleConnectionService.INTENT_EXTRA_SERVICE_DATA);
-                //String toHex = String.format("%x", new BigInteger(1, data)); //Show all data in textbox
-
+//                String toHex = String.format("%x", new BigInteger(1, data)); //Show all data in textbox, comment out to not show all CAN data
+//                RxTextBox.append(toHex); // comment out to not show all CAN data
 
                 // Put all the bytes into a queue
                 for (int i = 0; i < data.length; i++) {
@@ -394,9 +445,11 @@ public class ConnectedActivity extends AppCompatActivity {
                                 ParseCanMessage(parsedRxMsg);
                             }
                             else{
-                                String toHex = byteArrayToHex(msgReady);
-                                toHex = toHex.replaceAll("..", "$0 ").trim();
-                                RxTextBox.append(toHex);
+                                if ((parsedRxMsg != null)) {
+                                    String toHex = byteArrayToHex(msgReady);
+                                    toHex = toHex.replaceAll("..", "$0 ").trim();
+                                    RxTextBox.append(toHex);
+                                }
                             }
 
                             break;
@@ -480,18 +533,18 @@ public class ConnectedActivity extends AppCompatActivity {
         byte dlc = 0;
         byte[] data = new byte[8];
 
-        cmd = msg[0];
-        messageId = msg[1];
-        messageId |= msg[2] << 8;
-        messageId |= msg[3] << 16;
-        messageId |= msg[4] << 24;
+        cmd = msg[4];
+        messageId = msg[5];
+        messageId |= msg[6] << 8;
+        messageId |= msg[7] << 16;
+        messageId |= msg[8] << 24;
 
-        isExtended = msg[5];
+        isExtended = msg[9];
 
-        dlc = msg[6];
+        dlc = msg[10];
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = msg[i+7];
+            data[i] = msg[i+11];
         }
 
         switch(messageId) {
