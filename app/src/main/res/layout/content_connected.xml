@@ -18,7 +18,17 @@
             app:layout_constraintTop_toBottomOf="@+id/swRevButton"
             android:layout_marginStart="2dp" />
 
-        <TextView
+    <Button
+        android:id="@+id/setCanFMButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="2dp"
+        android:text="F/M"
+        app:layout_constraintStart_toEndOf="@+id/setCanBitrateButton"
+        app:layout_constraintTop_toBottomOf="@+id/disconnButton" />
+
+    <TextView
         android:id="@+id/rx_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -102,7 +112,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tx_data_text_box"
-        app:layout_constraintTop_toBottomOf="@+id/hwRevButton" />
+        app:layout_constraintTop_toBottomOf="@+id/setCanFMButton" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/tx_clear_float_button"

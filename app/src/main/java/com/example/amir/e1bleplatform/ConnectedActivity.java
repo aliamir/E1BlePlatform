@@ -56,6 +56,7 @@ public class ConnectedActivity extends AppCompatActivity {
     Button GetModuleCap;
     Button ResetModuleCap;
     Button SetCanBitrate;
+    Button SetCanFiltersMasks;
     FloatingActionButton ClearTxButton;
     FloatingActionButton ClearRxButton;
 
@@ -257,6 +258,20 @@ public class ConnectedActivity extends AppCompatActivity {
             }
         });
 
+        SetCanFiltersMasks = findViewById(R.id.setCanFMButton);
+        SetCanFiltersMasks.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (BleState.CONNECTED == mBleState) {
+//                                         0x48=write  0x80 = manual
+                    byte value[] = {(byte) 0x48,(byte) 0x00,(byte) 0xFF,(byte) 0xFF,(byte) 0xFF,(byte) 0xFF}; // 0x48 = write filters/masks, 0x08 = read filters/masks
+                    byte checksumbyte[] = createPacket(value);
+                    String HexString = byteArrayToHex(checksumbyte);
+                    HexString = HexString.replaceAll("..", "$0 ").trim();
+                    TxTextBox.setText(HexString);
+                    mBleConnectionService.writeMLDP(checksumbyte);
+                }
+            }
+        });
 
         if (!serviceStarted) {
             StartBleConnectionService();
