@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -57,6 +58,7 @@ public class ConnectedActivity extends AppCompatActivity {
     Button ResetModuleCap;
     Button SetCanBitrate;
     Button SetCanFiltersMasks;
+    Button TxCanMsg;
     FloatingActionButton ClearTxButton;
     FloatingActionButton ClearRxButton;
 
@@ -269,6 +271,30 @@ public class ConnectedActivity extends AppCompatActivity {
                     HexString = HexString.replaceAll("..", "$0 ").trim();
                     TxTextBox.setText(HexString);
                     mBleConnectionService.writeMLDP(checksumbyte);
+                }
+            }
+        });
+
+        TxCanMsg = findViewById(R.id.txCanMsgButton);
+        TxCanMsg.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (BleState.CONNECTED == mBleState) {
+//                                         0x41=write  0xa1                                            STD        DLC
+//                    byte value[] = {(byte) 0x41,(byte) 0xA1,(byte) 0x02,(byte) 0x00,(byte) 0x00,(byte)0x00, (byte)0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}; // 0x41 = write CAN msg
+                    byte value[] = {(byte) 0x41,(byte) 0xA1, (byte)0x02, (byte)0x00, (byte)0x00,(byte)0x00, (byte)0x08, (byte)0x01, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x06, (byte)0x07, (byte)0x08}; // 0x41 = write CAN msg
+                    byte checksumbyte[] = createPacket(value);
+                    String HexString = byteArrayToHex(checksumbyte);
+                    HexString = HexString.replaceAll("..", "$0 ").trim();
+                    TxTextBox.setText(HexString);
+                    if (checksumbyte.length > 10) {
+                        byte[] split1 = Arrays.copyOfRange(checksumbyte, 0, 10);
+                        byte[] split2 = Arrays.copyOfRange(checksumbyte, 10, checksumbyte.length);
+                        mBleConnectionService.writeMLDP(split1);
+                        mBleConnectionService.writeMLDP(split2);
+                    }
+                    else {
+                        mBleConnectionService.writeMLDP(checksumbyte);
+                    }
                 }
             }
         });
