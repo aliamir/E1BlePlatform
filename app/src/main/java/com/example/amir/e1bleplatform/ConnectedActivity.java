@@ -280,7 +280,6 @@ public class ConnectedActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (BleState.CONNECTED == mBleState) {
 //                                         0x41=write  0xa1                                            STD        DLC
-//                    byte value[] = {(byte) 0x41,(byte) 0xA1,(byte) 0x02,(byte) 0x00,(byte) 0x00,(byte)0x00, (byte)0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}; // 0x41 = write CAN msg
                     byte value[] = {(byte) 0x41,(byte) 0xA1, (byte)0x02, (byte)0x00, (byte)0x00,(byte)0x00, (byte)0x08, (byte)0x01, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x06, (byte)0x07, (byte)0x08}; // 0x41 = write CAN msg
                     byte checksumbyte[] = createPacket(value);
                     String HexString = byteArrayToHex(checksumbyte);
